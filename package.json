@@ -1,0 +1,37 @@
+{
+  "name": "node-red-contrib-netfield-websocket",
+  "version": "0.9.8",
+  "main": "netFIELDwebsocket.js",
+  "description": "Node-RED nodes for Hilscher 'netFIELD Cloud' WebSocket API services",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hilschernetpi<netpi@hilscher.com>",
+  "contributors": [
+    {
+      "name": "Andreas Winkler",
+      "company": "Hilscher Gesellschaft fuer Systemautomation mbH"
+    }
+  ],
+  "license": "MIT",
+  "node-red": {
+    "nodes": {
+      "netFIELD-WebSocket": "netFIELDWebSocket.js"
+    }
+  },
+  "dependencies": {
+    "btoa": "^1.2.1",
+    "ws": "^7.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HilscherAutomation/node-red-contrib-netfield-websocket"
+  },
+  "keywords": [
+    "node-red",
+    "netFIELD",
+    "netFIELD.io",
+    "WebSocket",
+    "api.netfield.io"
+  ]
+}

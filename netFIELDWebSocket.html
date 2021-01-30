@@ -1,0 +1,179 @@
+<script type="text/javascript">
+    RED.nodes.registerType('websocket-in',{
+        category: 'netFIELD',
+        color:"rgb(215, 215, 160)",
+        defaults: {
+            name: {value:""},
+            websocket: {type:"websocket-config", required:true},
+            "deviceid": { value: "", required:true, validate:RED.validators.regex(/^[A-Za-z0-9]{24}$/)},
+            "topic": { value: "#"},
+        },
+        inputs:0,
+        outputs:1,
+        icon: "white-globe.svg",
+        label: function() {
+            return this.name||"netFIELD websocket in";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="websocket-in">
+    <div class="form-row">
+        <label for="node-input-websocket"><i class="fa fa-globe"> </i> Websocket</label>
+        <input type="text" id="node-input-websocket">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-deviceid"><i class="fa fa-id-card-o"></i> Device ID</label>
+        <input type="text" id="node-input-deviceid" placeholder="e.g. 5f7b1bec199d7835e0928e9b">
+
+        <label for="node-input-topic"><i class="fa fa-hashtag"></i> Topic</label>
+        <input type="text" id="node-input-topic" placeholder="#">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="websocket-in">
+    <p>WebSocket listener input node to communicate with Hilscher 'netFIELD Cloud' technology based WebSocket interfaces.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+       <dt class="madatory">Device ID <span class="property-type">24 digit code</span></dt>
+       <dd>Specifies the device the node shall address. Get the Device ID from your cloud account.</dd>
+       <dt class="madatory">Topic <span class="property-type">string</span></dt>
+       <dd>Specifies the data object path within the device the node shall listen to. The value follows the format of a path e.g. /.../... . Get the topic from your cloud account. Using a wildcard '#' will inject all data objects matching the path+wildcard pattern. A single '#' as value will listen to all device data objects all at once.</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+       <dt class="mandatory">payload <span class="property-type">json</span></dt>
+       <dd>The JSON data object received through the WebSocket. Here is an example
+       <pre><code>
+       {
+         "createdAt":"2021-01-17T13:26:49.246Z",
+         "topic":"oi4/OTConnector/urn:hilscher.com/IO-Link-Adapter/IOLINKADAPTER/nd/pub/data/urn:ifm.com/TV7105/TV7105/000095619444.P1",
+         "chunk":null,
+         "data":{
+           "MessageId":"1610890009172-OTConnector/urn:hilscher.com/IO-Link-Adapter/IOLINKADAPTER/nd",
+           "MessageType":"ua-data",
+           "PublisherId":"OTConnector/urn:hilscher.com/IO-Link-Adapter/IOLINKADAPTER/nd",
+           "DataSetClassId":"d1390b10-d9af-430f-af77-8da528fa553b",
+           "Messages":[
+             {
+               "DataSetWriterId":"urn:ifm.com/TV7105/TV7105/000095619444.P1",
+               "Timestamp":"2021-01-17T13:26:49.172Z",
+               "Status":0,
+               "SequenceNumber":0,
+               "Payload":{
+                  "pd_Temperature":346,
+                  "pd_OUT2":false,
+                  "pd_OUT1":false,
+                  "o_Temperature":34.6,
+                  "o_OUT2":false,
+                  "o_OUT1":false
+               },
+               "MetaDataVersion":{
+                  "majorVersion":1610890009172,
+                  "minorVersion":1610890009172
+               }
+             }
+           ],
+           "CorrelationId":""
+         }
+       }
+       </code></pre>
+       </dd>
+    </dl>
+    
+    <h3>Config</h3>
+    <dl class="message-properties">
+       <dt class="madatory">Name <span class="property-type">string</span></dt>
+       <dd>Specifies a name of the configuration node.</dd>
+       <dt class="madatory">URL <span class="property-type">string</span></dt>
+       <dd>Specifies the WebSocket URL in the format wss://&lt;url&gt;. Default is <b>wss://api.netfield.io</b></dd> 
+       <dt class="madatory">Timeout Period <span class="property-type">string</span></dt>
+       <dd>Specifies the inactivity time (ping) monitored. If expired the WebSocket connection is assumed as timed out and tried to get restabslished again. Default is <b>30</b> seconds</dd>
+       <dt class="madatory">Key <span class="property-type">JWT token</span></dt>
+       <dd>Specifies the authorization key. Copy and paste a key received from your cloud account.</dd>
+    </dl>
+</script>
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('websocket-config',{
+        category: 'config',
+        defaults: {
+            name: {value:"",required:true},
+            "apiendpoint": {value:"wss://api.netfield.io",required:true,validate:RED.validators.regex(/^(wss?:\/\/)[a-zA-Z0-9\-]{1,64}\.[a-zA-Z0-9\.\-]{1,64}$/)},
+            "authorization": { value: "",required:true, validate:RED.validators.regex(/[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)$/)},
+            "inactivitytimeout" : { value: "30", required:true, validate:RED.validators.regex(/^[0-9]+$/)}
+
+        },
+        label: function() {
+            return this.name;
+        },
+        oneditprepare: function () {
+            var tabs = RED.tabs.create({
+                id: "node-config-netFIELD-websocket-tabs",
+                onchange: function(tab) {
+                    $("#node-config-netFIELD-websocket-tabs-content").children().hide();
+                    $("#" + tab.id).show();
+                }
+            });
+
+            tabs.addTab({
+                id: "netFIELD-websocket-tab-connection",
+                label: "Connection"
+            });
+
+            tabs.addTab({
+                id: "netFIELD-websocket-tab-security",
+                label: "Authorization"
+            });
+
+            setTimeout(function() { tabs.resize(); },10);
+        }
+
+    });
+</script>
+
+<script type="text/html" data-template-name="websocket-config">
+
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+        <br />
+        <br />
+    </div>
+    
+    <div class="form-row">
+        <ul style="min-width: 600px; margin-bottom: 20px;" id="node-config-netFIELD-websocket-tabs"></ul>
+    </div>
+
+    <div id="node-config-netFIELD-websocket-tabs-content" style="min-height:150px;">
+
+       <div id="netFIELD-websocket-tab-connection" style="display:none">
+           <div class="form-row">
+                <label for="node-config-input-apiendpoint"><i class="fa fa-globe"></i> URL</label>
+                <input type="text" id="node-config-input-apiendpoint" placeholder="wss://api.netfield.io">
+                <br />
+                <br />
+                <label for="node-config-input-inactivitytimeout"><i class="fa fa-globe"></i> Timeout Period [s]</label>
+                <input type="text" id="node-config-input-inactivitytimeout" placeholder="30">
+
+          </div>
+       </div>
+
+       <div id="netFIELD-websocket-tab-security" style="display:none">
+            <div class="form-row">
+                <label for="node-config-input-authorization"><i class="fa fa-key"></i> Key</label>
+                <input type="text" id="node-config-input-authorization" placeholder="e.g. eyJhbGciOiJIUzI1NiIsInR5cCI69.eyJ1SWQiO...">
+           </div>
+       </div>
+    </div>
+</script>
+
