@@ -11,6 +11,7 @@ const STATES = {
   AUTHENTICATED: "authenticated",
   SUBSCRIBING: "subscribing",
   SUBSCRIBED: "subscribed",
+  REVOKED: "revoked",
   UNSUBSCRIBING: "unsubscribing",
   UNSUBSCRIBED: "unsubscribed",
   CLIENT_INITIATED_CLOSE: "client-initiated close",
@@ -205,9 +206,14 @@ class netFIELDWebSocketClient extends EventEmitter {
         try {
           const dataObj = JSON.parse(data);
           const { type, message, payload } = dataObj;
+
           if (payload && payload.error) {
-            this.emit("error", data);
             this._setState(STATES.ERROR);
+            try {
+              this.emit("error", payload.message);
+            } catch {
+              
+            }
             return;
           }
           if (type === "ping") {
@@ -216,18 +222,26 @@ class netFIELDWebSocketClient extends EventEmitter {
             this.heartbeat();
             return;
           }
+
           switch (this.state) {
             case STATES.AUTHENTICATING:
               if (type === "hello") {
-                // got a 'hello' response after successfully authenticating, subscribing
+                // got a 'hello' response after trying to authenticate
                 this._setState(STATES.AUTHENTICATED);
                 this.subscribeToTopic(this.deviceId, this.topic);
+              } else {
+                this.emit("error", "invalid authentication response" );
+                this._setState(STATES.ERROR);
               }
               break;
             case STATES.SUBSCRIBING:
               if (type === "sub") {
                 // got a 'sub' response after successfully subscribing
                 this._setState(STATES.SUBSCRIBED);
+              } else if( type === "revoke") {
+                // got a 'revoke' response and subcription was denied
+                this._setState(STATES.REVOKED);
+                this.emit("revoke", message)
               }
               break;
             case STATES.SUBSCRIBED:

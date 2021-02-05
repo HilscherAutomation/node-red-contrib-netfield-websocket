@@ -60,6 +60,8 @@ module.exports = function (RED) {
           cntSubscriptionsTotal +=1;
           node.status({ fill: "green", shape: "dot", text: `reconnects: ${cntSubscriptionsTotal-1} / messages: ${ cntEmittedDataEventsTotal}`});
           break;
+        case STATES.REVOKED:
+          break;
         case STATES.CLIENT_INITIATED_CLOSE:
         case STATES.UNSUBSCRIBING:
           node.status({ fill: "red", shape: "ring", text: "disconnecting" });
@@ -87,8 +89,13 @@ module.exports = function (RED) {
       node.send({ payload: message });
     });
 
+    // a subscription has been revokedn
+    client.on("revoke", function SetNodeStatusToRevoked(message) {
+      node.status({ fill: "yellow", shape: "dot", text: `${message}` });
+    });
+
     // an error happened during communication
-    client.on("error", function logErrorMessageAndSetNodeStatusToError(error) {
+    client.on("error", function SetNodeStatusToError(error) {
       node.status({ fill: "red", shape: "dot", text: `${error}` });
     });
 
